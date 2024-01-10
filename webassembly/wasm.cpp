@@ -11,7 +11,7 @@ using namespace MeshLib;
 
 extern "C" {
 	extern void console_log(int);
-	uint32_t *subdivide(uint32_t *indices, int indices_count, float *vertices, int vertices_count);
+	uint32_t *subdivide(uint32_t *indices, int indices_count, float *vertices, int vertices_count, unsigned int count);
 	uint8_t* create_buffer(int size);
 	void destroy_buffer(uint8_t* p);
 }
@@ -61,10 +61,16 @@ Mesh *subdivide_mesh(Mesh *oldMesh) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int vertices_count) {
+uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int vertices_count, unsigned int count) {
 	Mesh *mesh = create_mesh(indices, indices_count, vertices, vertices_count);
 
-	Mesh *new_mesh = subdivide_mesh(mesh);
+	Mesh *new_mesh = mesh;
+
+	for (unsigned int i = 0; i < count; i++) {
+		new_mesh = subdivide_mesh(new_mesh);
+	}
+
+
 	//Mesh *new_mesh = mesh;
 	console_log(int(new_mesh));
 	//new_mesh->write_obj("/test");
