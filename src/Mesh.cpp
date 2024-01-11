@@ -343,7 +343,9 @@ void Mesh::clean_vertex() {
 }
 
 void Mesh::merge(float tolerance) {
+#ifdef LOG_TO_JAVASCRIPT
 	log_string("Merging vertices with tolerance " + std::to_string(tolerance));
+#endif
 
 	Point delta;
 	std::list<std::pair<Vertex*, Vertex*>> merge_verts;
@@ -368,7 +370,9 @@ void Mesh::merge(float tolerance) {
 			delta = v2->point();
 			delta -= v1->point();
 			if (delta.norm() <= tolerance) {
+#ifdef LOG_TO_JAVASCRIPT
 				log_string("Vector delta " + std::to_string(delta.norm()));
+#endif
 				merge_verts.push_back(std::make_pair(v1, v2));
 			}
 		}
@@ -387,7 +391,9 @@ void Mesh::merge(float tolerance) {
 }
 
 void Mesh::merge_vertices(Vertex *keep, Vertex *remove) {
+#ifdef LOG_TO_JAVASCRIPT
 	log_string("Merging vertex " + std::to_string(remove->id()) + " into " + std::to_string(keep->id()));
+#endif
 	HalfEdge *he1 = keep->halfedge();
 	HalfEdge *he2 = remove->halfedge();
 
@@ -400,11 +406,15 @@ void Mesh::merge_vertices(Vertex *keep, Vertex *remove) {
 		if (he != NULL) {
 			//log_string("Processing HE " + std::to_string(he->vertex()->id()));
 			if (he->vertex() == remove) {
+#ifdef LOG_TO_JAVASCRIPT
 				log_string("Removing vertex " + std::to_string(he->vertex()->id()));
+#endif
 				he->vertex() = keep;
 			}
 			if (he->source() == remove) {
+#ifdef LOG_TO_JAVASCRIPT
 				log_string("Removing source " + std::to_string(he->source()->id()));
+#endif
 				he->source() = keep;
 			}
 		}

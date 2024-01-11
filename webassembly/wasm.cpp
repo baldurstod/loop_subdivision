@@ -24,7 +24,10 @@ Mesh *create_mesh(uint32_t *indices, int indices_count, float *vertices, int ver
 	int  vid = 0;
 	int  fid = 0;
 	//int  nid = 1;
+
+#ifdef LOG_TO_JAVASCRIPT
 	log_string("Creating mesh indices: " + std::to_string((unsigned int)indices_count) + " vertices: " + std::to_string((unsigned int)vertices_count));
+#endif
 
 	for (int i = 0; i < vertices_count; i+=3) {
 		Point p;
@@ -61,7 +64,9 @@ Mesh *subdivide_mesh(Mesh *oldMesh) {
 
 EMSCRIPTEN_KEEPALIVE
 uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int vertices_count, unsigned int count, float tolerance) {
+#ifdef LOG_TO_JAVASCRIPT
 	log_string("Subdividing " + std::to_string(count) + ", " + std::to_string(tolerance));
+#endif
 
 	Mesh *mesh = create_mesh(indices, indices_count, vertices, vertices_count);
 	if (tolerance >= 0) {
