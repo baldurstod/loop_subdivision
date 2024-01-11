@@ -343,7 +343,7 @@ void Mesh::clean_vertex() {
 }
 
 void Mesh::merge(float tolerance) {
-	log_string("Mergin vertices with tolerance " + std::to_string(tolerance));
+	log_string("Merging vertices with tolerance " + std::to_string(tolerance));
 
 	Point delta;
 	std::list<std::pair<Vertex*, Vertex*>> merge_verts;
@@ -378,10 +378,16 @@ void Mesh::merge(float tolerance) {
 	for (std::list<std::pair<Vertex*, Vertex*>>::iterator pair_iter = merge_verts.begin(); pair_iter != merge_verts.end(); ++pair_iter) {
 		this->merge_vertices(pair_iter->first, pair_iter->second);
 	}
+
+	for (std::list<std::pair<Vertex*, Vertex*>>::iterator pair_iter = merge_verts.begin(); pair_iter != merge_verts.end(); ++pair_iter) {
+		Vertex *v = pair_iter->second;
+		m_vertices.remove(v);
+		delete v;
+	}
 }
 
 void Mesh::merge_vertices(Vertex *keep, Vertex *remove) {
-	log_string("Begin of merge_vertices " + std::to_string(remove->id()) + " into " + std::to_string(keep->id()));
+	log_string("Merging vertex " + std::to_string(remove->id()) + " into " + std::to_string(keep->id()));
 	HalfEdge *he1 = keep->halfedge();
 	HalfEdge *he2 = remove->halfedge();
 
@@ -389,7 +395,6 @@ void Mesh::merge_vertices(Vertex *keep, Vertex *remove) {
 		return;
 	}
 
-	//HalfEdge *he = he2;
 	for (MeshHalfEdgeIterator iter(this); !iter.end(); ++iter) {
 		HalfEdge *he = *iter;
 		if (he != NULL) {
@@ -398,11 +403,12 @@ void Mesh::merge_vertices(Vertex *keep, Vertex *remove) {
 				log_string("Removing vertex " + std::to_string(he->vertex()->id()));
 				he->vertex() = keep;
 			}
+			if (he->source() == remove) {
+				log_string("Removing source " + std::to_string(he->source()->id()));
+				he->source() = keep;
+			}
 		}
 	}
-
-	m_vertices.remove(remove);
-	delete remove;
 }
 
 Face *Mesh::create_face(Vertex * v[], int id) {
