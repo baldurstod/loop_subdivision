@@ -403,55 +403,6 @@ void Mesh::merge_vertices(Vertex *keep, Vertex *remove) {
 
 	m_vertices.remove(remove);
 	delete remove;
-
-
-	//clean_vertex();
-	return;
-
-
-	HalfEdge *he = he2;
-	for (VertexEdgeIterator iter(remove); !iter.end(); ++iter) {
-		Edge *edge = *iter;
-
-		log_string("Processing edge " + std::to_string((unsigned int)edge));
-		for (int i = 0; i < 2; ++i) {
-			HalfEdge *he = edge->halfedge(i);
-			if (he != NULL) {
-				log_string("Processing HE " + std::to_string(he->vertex()->id()));
-				if (he->vertex() == remove) {
-					log_string("Removing vertex " + std::to_string(he->vertex()->id()));
-					//he->vertex() = keep;
-				}
-				//log_string("Processing HE " + std::to_string((unsigned int)he));
-			}
-		}
-	}
-	return;
-
-
-	do
-	{
-		log_string("Processing HE " + std::to_string(he->vertex()->id()));
-
-		if (he->he_sym() != NULL) {
-			log_string("HE has sym " + std::to_string(he->he_sym()->vertex()->id()));
-		}
-		//console_log(int(he));
-
-		if (he->vertex() == remove) {
-			//console_log(98765);
-			log_string("Removing vertex " + std::to_string(he->vertex()->id()));
-			he->vertex() = keep;
-		}
-		if (he->he_sym()->vertex() == remove) {
-			he->vertex() = keep;
-		}
-
-		he = he->he_next();
-		//he = he->clw_rotate_about_target();
-		log_string("Next HE " + std::to_string(he->vertex()->id()));
-	} while(he && he != he2);
-
 }
 
 Face *Mesh::create_face(Vertex * v[], int id) {
