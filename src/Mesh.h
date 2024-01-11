@@ -97,9 +97,11 @@ namespace MeshLib {
 		Face *create_face(Vertex *v[], int id);
 
 		void refine_halfedge_structure();
+		void merge(float tolerance);
+		void merge_vertices(Vertex *keep, Vertex *remove);
 
 	protected:
-		
+
 		void clean_vertex();
 
 		std::list<Edge*> m_edges;

@@ -6,12 +6,12 @@
 #include "../src/Mesh.h"
 #include "../src/FormTrait.h"
 #include "../src/LOOP.h"
+#include "../src/javascript.h"
 
 using namespace MeshLib;
 
 extern "C" {
-	extern void console_log(int);
-	uint32_t *subdivide(uint32_t *indices, int indices_count, float *vertices, int vertices_count, unsigned int count);
+	uint32_t *subdivide(uint32_t *indices, int indices_count, float *vertices, int vertices_count, unsigned int count, float tolerance);
 	uint8_t* create_buffer(int size);
 	void destroy_buffer(uint8_t* p);
 }
@@ -24,8 +24,7 @@ Mesh *create_mesh(uint32_t *indices, int indices_count, float *vertices, int ver
 	int  vid = 0;
 	int  fid = 0;
 	//int  nid = 1;
-	console_log(indices_count);
-	console_log(vertices_count);
+	log_string("Creating mesh indices: " + std::to_string((unsigned int)indices_count) + " vertices: " + std::to_string((unsigned int)vertices_count));
 
 	for (int i = 0; i < vertices_count; i+=3) {
 		Point p;
@@ -61,8 +60,13 @@ Mesh *subdivide_mesh(Mesh *oldMesh) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int vertices_count, unsigned int count) {
+uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int vertices_count, unsigned int count, float tolerance) {
+	log_string("Subdividing " + std::to_string(count) + ", " + std::to_string(tolerance));
+
 	Mesh *mesh = create_mesh(indices, indices_count, vertices, vertices_count);
+	if (tolerance >= 0) {
+		mesh->merge(tolerance);
+	}
 
 	Mesh *new_mesh = mesh;
 
@@ -70,16 +74,9 @@ uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int 
 		new_mesh = subdivide_mesh(new_mesh);
 	}
 
-
-	//Mesh *new_mesh = mesh;
-	console_log(int(new_mesh));
-	//new_mesh->write_obj("/test");
-
 	std::list<Vertex*> &new_vertices_list = new_mesh->vertices();
 	uint32_t new_vertices_count = new_vertices_list.size() * 3;
 	float *new_vertices = new float[new_vertices_count];
-
-	console_log(new_vertices_list.size());
 
 	int vertex_index = 0;
 	for (std::list<Vertex*>::iterator viter = new_vertices_list.begin(); viter != new_vertices_list.end(); viter++) {
@@ -100,7 +97,7 @@ uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int 
 		HalfEdge *he = f->halfedge();
 
 		for (int i = 0; i < 3; i++) {
-			new_indices[face_index++] = he->target()->id() - 1;
+			new_indices[face_index++] = he->target()->id();
 			he = he->he_next();
 			//TODO: check if we actually have 3 vertices
 		}

@@ -12,7 +12,7 @@ export class LoopSubdivision {
 		LoopSubdivision.#instance = this;
 	}
 
-	async subdivide(indices, vertices) {
+	async subdivide(indices, vertices, subdivideCount = 1, tolerance = 0.001) {
 		await this.#initWebAssembly();
 		const api = this.#webAssembly.instance.exports;
 
@@ -29,8 +29,10 @@ export class LoopSubdivision {
 		indicesView.set(indices);
 		const verticesView = new Float32Array(this.#heapBuffer, verticesPointer, verticesCount);
 		verticesView.set(vertices);
+		console.log(indices.join(', '));
+		console.log(vertices.join(', '));
 
-		const subdivideResult = api.subdivide(indicesPointer, indicesCount, verticesPointer, verticesCount);
+		const subdivideResult = api.subdivide(indicesPointer, indicesCount, verticesPointer, verticesCount, subdivideCount, tolerance);
 		// subdivideResult points to an array of [pointer to indices array, indices length, pointer to vertices array, vertices length];
 		console.log(subdivideResult);
 
@@ -44,7 +46,13 @@ export class LoopSubdivision {
 		const newIndicesView = new Uint32Array(this.#heapBuffer, resultView[0], resultView[1]);
 		const newVerticesView = new Float32Array(this.#heapBuffer, resultView[2], resultView[3]);
 
+		//TODO: create new arrays and delete objects
+
 		console.log(newIndicesView, newVerticesView);
+		return {
+			indices: newIndicesView,
+			vertices: newVerticesView,
+		}
 	}
 
 	async #initWebAssembly() {
@@ -59,7 +67,10 @@ export class LoopSubdivision {
 			'tableBase': 0,
 			'memoryBase': 1024,
 			'STACKTOP': 0,
-			console_log: (i) => console.log(i),
+			console_log: (ptr, size) => {
+				const stringContent = new Uint8Array(this.#heapBuffer, ptr, size);
+				console.log(new TextDecoder().decode(stringContent));
+			},
 			wasi_snapshot_preview1: {},
 		};
 		//this.#webAssembly = await loopSubdivision({ env });

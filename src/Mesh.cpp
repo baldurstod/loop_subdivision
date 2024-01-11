@@ -9,12 +9,14 @@
 #include "HalfEdge.h"
 #include "Edge.h"
 #include "Face.h"
+#include "Iterators.h"
 #include "Mesh.h"
 #include <fstream>
 #include <cstring>
 #include <iostream>
 #include <map>
 #include "FormTrait.h"
+#include "javascript.h"
 
 using namespace MeshLib;
 
@@ -273,7 +275,7 @@ int Mesh::read_obj(const char * filename) {
 	fclose(f);
 
 	refine_halfedge_structure();
-	
+
 	return 0;
 }
 
@@ -338,6 +340,118 @@ void Mesh::clean_vertex() {
 		delete v;
 		v = NULL;
 	}
+}
+
+void Mesh::merge(float tolerance) {
+	log_string("Mergin vertices with tolerance " + std::to_string(tolerance));
+
+	Point delta;
+	std::list<std::pair<Vertex*, Vertex*>> merge_verts;
+
+	for (std::list<Vertex*>::iterator v1iter = m_vertices.begin(); v1iter != m_vertices.end(); ++v1iter) {
+		for (std::list<Vertex*>::iterator v2iter = std::next(v1iter); v2iter != m_vertices.end(); ++v2iter) {
+			Vertex *v1 = *v1iter;
+			Vertex *v2 = *v2iter;
+
+			HalfEdge *he1 = v1->halfedge();
+			HalfEdge *he2 = v2->halfedge();
+			if (he1 == NULL || he2 == NULL) {
+				continue;
+			}
+
+			Face *f1 = he1->face();
+			Face *f2 = he2->face();
+			if (f1 == NULL || f2 == NULL || f1 == f2) {
+				continue;
+			}
+
+			delta = v2->point();
+			delta -= v1->point();
+			if (delta.norm() <= tolerance) {
+				log_string("Vector delta " + std::to_string(delta.norm()));
+				merge_verts.push_back(std::make_pair(v1, v2));
+			}
+		}
+	}
+
+
+	for (std::list<std::pair<Vertex*, Vertex*>>::iterator pair_iter = merge_verts.begin(); pair_iter != merge_verts.end(); ++pair_iter) {
+		this->merge_vertices(pair_iter->first, pair_iter->second);
+	}
+}
+
+void Mesh::merge_vertices(Vertex *keep, Vertex *remove) {
+	log_string("Begin of merge_vertices " + std::to_string(remove->id()) + " into " + std::to_string(keep->id()));
+	HalfEdge *he1 = keep->halfedge();
+	HalfEdge *he2 = remove->halfedge();
+
+	if (he2 == NULL) {
+		return;
+	}
+
+	//HalfEdge *he = he2;
+	for (MeshHalfEdgeIterator iter(this); !iter.end(); ++iter) {
+		HalfEdge *he = *iter;
+		if (he != NULL) {
+			//log_string("Processing HE " + std::to_string(he->vertex()->id()));
+			if (he->vertex() == remove) {
+				log_string("Removing vertex " + std::to_string(he->vertex()->id()));
+				he->vertex() = keep;
+			}
+		}
+	}
+
+	m_vertices.remove(remove);
+	delete remove;
+
+
+	//clean_vertex();
+	return;
+
+
+	HalfEdge *he = he2;
+	for (VertexEdgeIterator iter(remove); !iter.end(); ++iter) {
+		Edge *edge = *iter;
+
+		log_string("Processing edge " + std::to_string((unsigned int)edge));
+		for (int i = 0; i < 2; ++i) {
+			HalfEdge *he = edge->halfedge(i);
+			if (he != NULL) {
+				log_string("Processing HE " + std::to_string(he->vertex()->id()));
+				if (he->vertex() == remove) {
+					log_string("Removing vertex " + std::to_string(he->vertex()->id()));
+					//he->vertex() = keep;
+				}
+				//log_string("Processing HE " + std::to_string((unsigned int)he));
+			}
+		}
+	}
+	return;
+
+
+	do
+	{
+		log_string("Processing HE " + std::to_string(he->vertex()->id()));
+
+		if (he->he_sym() != NULL) {
+			log_string("HE has sym " + std::to_string(he->he_sym()->vertex()->id()));
+		}
+		//console_log(int(he));
+
+		if (he->vertex() == remove) {
+			//console_log(98765);
+			log_string("Removing vertex " + std::to_string(he->vertex()->id()));
+			he->vertex() = keep;
+		}
+		if (he->he_sym()->vertex() == remove) {
+			he->vertex() = keep;
+		}
+
+		he = he->he_next();
+		//he = he->clw_rotate_about_target();
+		log_string("Next HE " + std::to_string(he->vertex()->id()));
+	} while(he && he != he2);
+
 }
 
 Face *Mesh::create_face(Vertex * v[], int id) {
