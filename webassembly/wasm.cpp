@@ -16,8 +16,6 @@ extern "C" {
 	void destroy_buffer(uint8_t* p);
 }
 
-int result[2];
-
 EMSCRIPTEN_KEEPALIVE
 Mesh *create_mesh(uint32_t *indices, int indices_count, float *vertices, int vertices_count) {
 	Mesh *mesh = new Mesh();
@@ -121,24 +119,4 @@ uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int 
 EMSCRIPTEN_KEEPALIVE
 uint8_t* create_buffer(int size) {
 	return new uint8_t[size];
-}
-
-EMSCRIPTEN_KEEPALIVE
-void destroy_buffer(uint8_t* p) {
-	delete p;
-}
-
-EMSCRIPTEN_KEEPALIVE
-int get_result_pointer() {
-	return result[0];
-}
-
-EMSCRIPTEN_KEEPALIVE
-int get_result_size() {
-	return result[1];
-}
-
-EMSCRIPTEN_KEEPALIVE
-int get_detex_error_message_pointer() {
-	return (int)0;//detexGetErrorMessage();
 }
