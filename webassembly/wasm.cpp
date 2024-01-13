@@ -13,12 +13,17 @@ using namespace MeshLib;
 extern "C" {
 	uint32_t *subdivide(uint32_t *indices, int indices_count, float *vertices, int vertices_count, unsigned int count, float tolerance);
 	uint8_t* create_buffer(int size);
-	void destroy_buffer(uint8_t* p);
+	void delete_buffer(uint8_t *ptr);
+	void cleanup();
 }
 
+uint32_t subdivide_ret[4];
+
 EMSCRIPTEN_KEEPALIVE
-Mesh *create_mesh(uint32_t *indices, int indices_count, float *vertices, int vertices_count) {
-	Mesh *mesh = new Mesh();
+std::unique_ptr<Mesh> create_mesh(uint32_t *indices, int indices_count, float *vertices, int vertices_count) {
+	std::unique_ptr<Mesh> ptr = std::unique_ptr<Mesh>(new Mesh());
+	Mesh *mesh = ptr.get();
+
 	int  vid = 0;
 	int  fid = 0;
 	//int  nid = 1;
@@ -48,34 +53,40 @@ Mesh *create_mesh(uint32_t *indices, int indices_count, float *vertices, int ver
 
 	mesh->refine_halfedge_structure();
 
-	return mesh;
+	return ptr;
 }
 
-Mesh *subdivide_mesh(Mesh *oldMesh) {
-	FormTrait traits(oldMesh); // add temporary variables
-	Mesh *new_mesh = new Mesh();
-	LOOP loop(oldMesh, new_mesh);
+std::unique_ptr<Mesh> subdivide_mesh(std::shared_ptr<Mesh> old_mesh_ptr) {
+	Mesh *old_mesh = old_mesh_ptr.get();
+	FormTrait traits(old_mesh); // add temporary variables
+	std::unique_ptr<Mesh> ptr = std::unique_ptr<Mesh>(new Mesh());
+	Mesh *new_mesh = ptr.get();
+
+	LOOP loop(old_mesh, new_mesh);
 	loop.subdivide();
 
-	return new_mesh;
+	return ptr;
 }
 
 EMSCRIPTEN_KEEPALIVE
-uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int vertices_count, unsigned int count, float tolerance) {
+uint32_t *subdivide(uint32_t *indices, int indices_count, float *vertices, int vertices_count, unsigned int count, float tolerance) {
 #ifdef LOG_TO_JAVASCRIPT
 	log_string("Subdividing " + std::to_string(count) + ", " + std::to_string(tolerance));
 #endif
 
-	Mesh *mesh = create_mesh(indices, indices_count, vertices, vertices_count);
+	std::shared_ptr<Mesh> mesh_ptr = create_mesh(indices, indices_count, vertices, vertices_count);
+
+	Mesh *mesh = mesh_ptr.get();
 	if (tolerance >= 0) {
 		mesh->merge(tolerance);
 	}
 
-	Mesh *new_mesh = mesh;
-
 	for (unsigned int i = 0; i < count; i++) {
-		new_mesh = subdivide_mesh(new_mesh);
+		mesh_ptr = subdivide_mesh(mesh_ptr);
 	}
+
+
+	Mesh *new_mesh = mesh_ptr.get();
 
 	std::list<Vertex*> &new_vertices_list = new_mesh->vertices();
 	uint32_t new_vertices_count = new_vertices_list.size() * 3;
@@ -106,17 +117,33 @@ uint32_t *subdivide(uint32_t * indices, int indices_count, float *vertices, int 
 		}
 	}
 
-	uint32_t *ret = new uint32_t[4];
-	ret[0] = reinterpret_cast<uint32_t>(new_indices);
-	ret[1] = new_indices_count;
-	ret[2] = reinterpret_cast<uint32_t>(new_vertices);
-	ret[3] = new_vertices_count;
+	subdivide_ret[0] = reinterpret_cast<uint32_t>(new_indices);
+	subdivide_ret[1] = new_indices_count;
+	subdivide_ret[2] = reinterpret_cast<uint32_t>(new_vertices);
+	subdivide_ret[3] = new_vertices_count;
 
-
-	return ret;
+	return subdivide_ret;
 }
 
 EMSCRIPTEN_KEEPALIVE
-uint8_t* create_buffer(int size) {
+uint8_t *create_buffer(int size) {
 	return new uint8_t[size];
+}
+
+EMSCRIPTEN_KEEPALIVE
+void delete_buffer(uint8_t *ptr) {
+	delete[] ptr;
+}
+
+EMSCRIPTEN_KEEPALIVE void cleanup() {
+	float *indices = reinterpret_cast<float *>(subdivide_ret[0]);
+	uint32_t *vertices = reinterpret_cast<uint32_t *>(subdivide_ret[2]);
+
+	delete[] indices;
+	delete[] vertices;
+
+	subdivide_ret[0] = NULL;
+	subdivide_ret[1] = 0;
+	subdivide_ret[2] = NULL;
+	subdivide_ret[3] = 0;
 }

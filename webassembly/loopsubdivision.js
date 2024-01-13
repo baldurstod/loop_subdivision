@@ -1,5 +1,7 @@
 //import loopSubdivision from './loop_subdivision.wasm';
 
+const TESTING = true;
+
 export class LoopSubdivision {
 	static #instance;
 	#webAssembly;
@@ -29,24 +31,32 @@ export class LoopSubdivision {
 		indicesView.set(indices);
 		const verticesView = new Float32Array(this.#heapBuffer, verticesPointer, verticesCount);
 		verticesView.set(vertices);
-		console.log(indices.join(', '));
-		console.log(vertices.join(', '));
+		//console.log(indices.join(', '));
+		//console.log(vertices.join(', '));
 
 		const subdivideResult = api.subdivide(indicesPointer, indicesCount, verticesPointer, verticesCount, subdivideCount, tolerance);
+
+		api.delete_buffer(indicesPointer);
+		api.delete_buffer(verticesPointer);
+
 		// subdivideResult points to an array of [pointer to indices array, indices length, pointer to vertices array, vertices length];
-		console.log(subdivideResult);
+		if (TESTING) {
+			console.log(subdivideResult);
+		}
 
 		const resultView = new Uint32Array(this.#heapBuffer, subdivideResult, 4);
 		//indicesView.set(indices);
 		//const verticesView = new Float32Array(this.#heapBuffer, verticesPointer, verticesCount);*/
-		console.log(resultView);
+		if (TESTING) {
+			console.log(resultView);
+		}
 
 
 
-		const newIndicesView = new Uint32Array(this.#heapBuffer, resultView[0], resultView[1]);
-		const newVerticesView = new Float32Array(this.#heapBuffer, resultView[2], resultView[3]);
+		const newIndicesView = new Uint32Array(new Uint32Array(this.#heapBuffer, resultView[0], resultView[1]));
+		const newVerticesView = new Float32Array(new Float32Array(this.#heapBuffer, resultView[2], resultView[3]));
 
-		//TODO: create new arrays and delete objects
+		api.cleanup();
 
 		console.log(newIndicesView, newVerticesView);
 		return {
@@ -62,7 +72,12 @@ export class LoopSubdivision {
 
 		const env = {
 			'abortStackOverflow': _ => { throw new Error('overflow'); },
-			'emscripten_notify_memory_growth': _ => { console.error('growth ', this.#webAssembly.instance.exports.memory.buffer.byteLength);this.#initHeap(); },
+			'emscripten_notify_memory_growth': _ => {
+				if (TESTING) {
+					console.error('growth ', this.#webAssembly.instance.exports.memory.buffer.byteLength);
+				}
+				this.#initHeap();
+			},
 			'table': new WebAssembly.Table({initial: 0, maximum: 0, element: 'anyfunc'}),
 			'tableBase': 0,
 			'memoryBase': 1024,
@@ -71,7 +86,6 @@ export class LoopSubdivision {
 				const stringContent = new Uint8Array(this.#heapBuffer, ptr, size);
 				console.log(new TextDecoder().decode(stringContent));
 			},
-			wasi_snapshot_preview1: {},
 		};
 		//this.#webAssembly = await loopSubdivision({ env });
 
@@ -80,7 +94,7 @@ export class LoopSubdivision {
 			wasi_snapshot_preview1: {
 				fd_write: (p1, p2, p3, p4) => {
 					const stringLoc = new Uint32Array(this.#heapBuffer, p2, 2);
-					console.log(stringLoc[0], stringLoc[1]);
+					//console.log(stringLoc[0], stringLoc[1]);
 
 					const stringContent = new Uint8Array(this.#heapBuffer, stringLoc[0], stringLoc[1]);
 					console.log(new TextDecoder().decode(stringContent));
