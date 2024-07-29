@@ -422,11 +422,20 @@ void Mesh::merge_vertices(Vertex *keep, Vertex *remove) {
 }
 
 Face *Mesh::create_face(Vertex * v[], int id) {
-	Face *f = new Face();
+	FaceKey key(v[0], v[1], v[2]);
+
+	Face *f = NULL;
+
+	if (m_map_face.find(key) != m_map_face.end()) {
+		f = m_map_face[key];
+		return f;
+	}
+
+	f = new Face();
 	assert(f != NULL);
 	f->id() = id;
 	m_faces.push_back(f);
-	m_map_face.insert(std::pair<int, Face*>(id, f));
+	m_map_face.insert(std::pair<FaceKey, Face*>(key, f));
 
 	//create halfedges
 	HalfEdge *hes[3];
@@ -476,11 +485,6 @@ Vertex *Mesh::id_vertex(int id) {
 //access v->id
 int Mesh::vertex_id(Vertex  *v) {
 	return v->id();
-}
-
-//access id->f
-Face *Mesh::id_face(int id) {
-	return m_map_face[id];
 }
 
 //acess f->id

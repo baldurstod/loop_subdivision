@@ -27,3 +27,63 @@ Point Face::normal() {
 	n /= n.norm();
 	return n;
 }
+
+FaceKey::FaceKey(Vertex * v1, Vertex* v2, Vertex* v3) {
+	assert((v1->id() != v2->id()) && (v2->id() != v3->id()) && (v3->id() != v1->id()));
+
+	if (v1->id() < v2->id()) {
+		if (v2->id() < v3->id()) {
+			m_vertices[0] = v1;
+			m_vertices[1] = v2;
+			m_vertices[2] = v3;
+		} else {
+			if (v1->id() < v3->id()) {
+				m_vertices[0] = v1;
+				m_vertices[1] = v3;
+				m_vertices[2] = v2;
+			} else {
+				m_vertices[0] = v3;
+				m_vertices[1] = v1;
+				m_vertices[2] = v2;
+			}
+		}
+	}
+	else {
+		if (v2->id() < v3->id()) {
+			if (v1->id() < v3->id()) {
+				m_vertices[0] = v2;
+				m_vertices[1] = v1;
+				m_vertices[2] = v3;
+			} else {
+				m_vertices[0] = v2;
+				m_vertices[1] = v3;
+				m_vertices[2] = v1;
+			}
+		} else {
+			m_vertices[0] = v3;
+			m_vertices[1] = v2;
+			m_vertices[2] = v1;
+		}
+	}
+}
+
+bool FaceKey::operator<(const FaceKey & key) const {
+	if (m_vertices[0]->id() < key.m_vertices[0]->id()) return true;
+	if (m_vertices[0]->id() > key.m_vertices[0]->id()) return false;
+
+	if (m_vertices[1]->id() < key.m_vertices[1]->id()) return true;
+	if (m_vertices[1]->id() > key.m_vertices[1]->id()) return false;
+
+	if (m_vertices[2]->id() < key.m_vertices[2]->id()) return true;
+	if (m_vertices[2]->id() > key.m_vertices[2]->id()) return false;
+
+	return false;
+}
+
+bool FaceKey::operator==(const FaceKey & key) const {
+	if (m_vertices[0]->id() != key.m_vertices[0]->id()) return false;
+	if (m_vertices[1]->id() != key.m_vertices[1]->id()) return false;
+	if (m_vertices[2]->id() != key.m_vertices[2]->id()) return false;
+
+	return true;
+}

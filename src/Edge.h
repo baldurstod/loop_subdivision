@@ -36,6 +36,17 @@ namespace MeshLib {
 	private:
 		Vertex *m_vertices[2];
 	};
+
+	class FaceKey {
+	public:
+		~FaceKey() {};
+		FaceKey(Vertex *v1, Vertex *v2, Vertex *v3);
+		bool operator<(const FaceKey & key) const ;
+		bool operator==(const FaceKey & key) const;
+
+	private:
+		Vertex *m_vertices[3];
+	};
 }
 
 #endif

@@ -109,7 +109,7 @@ namespace MeshLib {
 		std::list<Vertex*> m_vertices;
 
 		std::map<int, Vertex*> m_map_vertex;
-		std::map<int, Face*> m_map_face;
+		std::map<FaceKey, Face*> m_map_face;
 		std::map<EdgeKey, Edge*> m_map_edge;
 		// std::map<int, Edge> m_map_edge;
 	};

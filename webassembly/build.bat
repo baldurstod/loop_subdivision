@@ -7,7 +7,7 @@ K:\Projects\WWW\emscripten\emsdk\upstream\emscripten\em++ ^
 -s EXTRA_EXPORTED_RUNTIME_METHODS="['cwrap']" ^
 -s WASM=1 ^
 -s ERROR_ON_UNDEFINED_SYMBOLS=0 ^
-wasm.cpp ../src/Mesh.cpp ../src/Edge.cpp ../src/LOOP.cpp ../src/FormTrait.cpp ../src/HalfEdge.cpp ../src/javascript.cpp ../src/Vertex.cpp
+wasm.cpp ../src/Mesh.cpp ../src/Edge.cpp ../src/LOOP.cpp ../src/FormTrait.cpp ../src/HalfEdge.cpp ../src/javascript.cpp ../src/Vertex.cpp  ../src/Face.cpp
 
 rem -s INITIAL_MEMORY=67108864 ^
 rem -g2 ^
