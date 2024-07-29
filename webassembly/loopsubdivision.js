@@ -92,15 +92,23 @@ export class LoopSubdivision {
 		const imports = {
 			env: env,
 			wasi_snapshot_preview1: {
-				fd_write: (p1, p2, p3, p4) => {
-					const stringLoc = new Uint32Array(this.#heapBuffer, p2, 2);
-					//console.log(stringLoc[0], stringLoc[1]);
-
-					const stringContent = new Uint8Array(this.#heapBuffer, stringLoc[0], stringLoc[1]);
-					console.log(new TextDecoder().decode(stringContent));
-
-					const result = new Uint32Array(this.#heapBuffer, p4);
-					result[0] = stringLoc[1];
+				fd_write: (fd, iovsPtr, iovsLength, bytesWrittenPtr) => {
+					const iovs = new Uint32Array(this.#heapBuffer, iovsPtr, iovsLength * 2);
+					if(fd === 1 || fd === 2) { //stdout
+						let text = "";
+						let totalBytesWritten = 0;
+						const decoder = new TextDecoder();
+						for(let i =0; i < iovsLength * 2; i += 2){
+							const offset = iovs[i];
+							const length = iovs[i+1];
+							const textChunk = decoder.decode(new Int8Array(this.#heapBuffer, offset, length));
+							text += textChunk;
+							totalBytesWritten += length;
+						}
+						const dataView = new DataView(this.#heapBuffer);
+						dataView.setInt32(bytesWrittenPtr, totalBytesWritten, true);
+						console.log(text);
+					}
 					return 0;
 				},
 				fd_seek: (p1, p2, p3, p4) => {
