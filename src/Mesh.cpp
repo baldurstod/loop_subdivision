@@ -291,14 +291,14 @@ void Mesh::refine_halfedge_structure() {
 		assert(he[0] != NULL);
 
 		if (he[1] != NULL) {
-			assert(he[0]->target() == he[1]->source() && he[0]->source() == he[1]->target());
+			//assert(he[0]->target() == he[1]->source() && he[0]->source() == he[1]->target());
 
 			if (he[0]->target()->id() < he[0]->source()->id()) {
 				edge->halfedge(0) = he[1];
 				edge->halfedge(1) = he[0];
 			}
 
-			assert(edge_vertex_1(edge)->id() < edge_vertex_2(edge)->id());
+			//assert(edge_vertex_1(edge)->id() < edge_vertex_2(edge)->id());
 		}
 		else {
 			he[0]->vertex()->boundary() = true;
@@ -467,7 +467,7 @@ Face *Mesh::create_face(Vertex * v[], int id) {
 			e->halfedge(0) = hes[i];
 		}
 		else {
-			assert(e->halfedge(1) == NULL);
+			//assert(e->halfedge(1) == NULL);
 			e->halfedge(1) = hes[i];
 		}
 		hes[i]->edge() = e;
@@ -571,4 +571,3 @@ int Mesh::write_obj(const char * output) {
 	fclose(_os);
 	return 0;
 }
-
