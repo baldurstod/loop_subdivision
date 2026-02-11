@@ -15,6 +15,7 @@
 #include <cstring>
 #include <iostream>
 #include <map>
+#include <set>
 #include "FormTrait.h"
 #include "javascript.h"
 
@@ -317,12 +318,13 @@ void Mesh::refine_halfedge_structure() {
 		if (!v->boundary()) continue;
 
 		HalfEdge * he = v->halfedge();
-		HalfEdge * start = he;
+		std::set<HalfEdge *> edges;
 		while (he->he_sym() != NULL) {
 			he = he->ccw_rotate_about_target();
-			if (he == start) {
+			if (edges.find(he) != edges.end()) {
 				break;
 			}
+			edges.insert(he);
 		}
 
 		v->halfedge() = he;
