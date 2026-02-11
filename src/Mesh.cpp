@@ -317,8 +317,12 @@ void Mesh::refine_halfedge_structure() {
 		if (!v->boundary()) continue;
 
 		HalfEdge * he = v->halfedge();
+		HalfEdge * start = he;
 		while (he->he_sym() != NULL) {
 			he = he->ccw_rotate_about_target();
+			if (he == start) {
+				break;
+			}
 		}
 
 		v->halfedge() = he;
