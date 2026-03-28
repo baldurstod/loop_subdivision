@@ -10,6 +10,7 @@
 #include <math.h>
 #include <float.h>
 #include <iostream>
+#include <set>
 #include <sstream>
 
 using namespace MeshLib;
@@ -47,19 +48,29 @@ void LOOP::subdivide() {
 			//vNew->point() = v->point(); // Linear, blow is quadratic
 
 			std::vector <Point > plist;
-			
+
 			// find most clw neighbor
 			HalfEdge *a = v->halfedge();
+			std::set<HalfEdge *> edges;
 			while (a->clw_rotate_about_target()) {
 				a = a->clw_rotate_about_target();
-			} 
+				if (edges.find(a) != edges.end()) {
+					break;
+				}
+				edges.insert(a);
+			}
 			a = a->he_next();
 
 			// find most ccw neighbor
 			HalfEdge *b = v->halfedge();
+			edges.clear();
 			while (b->ccw_rotate_about_target()) {
 				b = b->clw_rotate_about_target();
-			} 
+				if (edges.find(b) != edges.end()) {
+					break;
+				}
+				edges.insert(b);
+			}
 
 			// assign new value
 			vNew->point() = v->point() * 0.75f + (b->source()->point() + a->target()->point()) * 0.125f;
@@ -72,9 +83,14 @@ void LOOP::subdivide() {
 
 			int n = 0;
 			// clw rotate
+			std::set<HalfEdge *> edges;
 			do {
 				plist.push_back(he->source()->point()); // save point
 				he = he->clw_rotate_about_target();
+				if (edges.find(he) != edges.end()) {
+					break;
+				}
+				edges.insert(he);
 				n++;
 			} while (he != v->halfedge());
 
@@ -110,7 +126,7 @@ void LOOP::subdivide() {
 		}
 
 		e_v(e) = vNew;
-	} 
+	}
 
 	// Create new faces
 	int fid = 0;
@@ -122,7 +138,7 @@ void LOOP::subdivide() {
 		fhe[2] = fhe[1]->he_next();
 
 		Vertex * v[3];
-	
+
 		// create the central small triangle
 		for (int i = 0; i < 3; i++){
 			v[i] = e_v(fhe[i]->edge());
@@ -138,5 +154,5 @@ void LOOP::subdivide() {
 		}
 	}
 
-	m_mesh2->refine_halfedge_structure(); 
+	m_mesh2->refine_halfedge_structure();
 }
