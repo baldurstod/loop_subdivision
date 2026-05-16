@@ -111,7 +111,11 @@ uint32_t *subdivide(uint32_t *indices, int indices_count, float *vertices, int v
 		HalfEdge *he = f->halfedge();
 
 		for (int i = 0; i < 3; i++) {
-			new_indices[face_index++] = he->target()->id() - 1;
+			auto index = he->target()->id();
+			if (index > 0) {
+				--index;
+			}
+			new_indices[face_index++] = index;
 			he = he->he_next();
 			//TODO: check if we actually have 3 vertices
 		}
